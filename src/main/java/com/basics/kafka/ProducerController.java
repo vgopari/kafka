@@ -1,7 +1,6 @@
 package com.basics.kafka;
 
-import org.apache.kafka.clients.producer.KafkaProducer;
-import org.apache.kafka.clients.producer.ProducerRecord;
+import org.apache.kafka.clients.producer.*;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,6 +33,64 @@ public class ProducerController {
 
         //send data to kafka topic
         producer.send(producerRecord);
+
+        //flush - tell the producer to send all the data and blocks untill done -- synchronous;
+        producer.flush();
+
+        //close the producer
+        producer.close();
+    }
+
+    @GetMapping("/producer/callback")
+    public void producerWithCallback() {
+        //create producer properties
+        Properties properties = new Properties();
+        properties.setProperty("bootstrap.servers", "127.0.0.1:9092");
+
+        properties.setProperty("key.serializer", StringSerializer.class.getName());
+        properties.setProperty("value.serializer", StringSerializer.class.getName());
+        properties.setProperty("batch.size", "400"); //to demonstrate the behaviour of sticky partitioner
+
+//        properties.setProperty("partitioner.class", RoundRobinPartitioner.class.getName());
+
+        //create producer
+        KafkaProducer<String, String> producer = new KafkaProducer<>(properties);
+
+        for (int j=0; j<10; j++) {
+
+            for (int i = 0; i < 10; i++) {
+
+                //sticky partitions:
+                //create a producer record
+                ProducerRecord<String, String> producerRecord = new ProducerRecord<>("first-topic", "Hello!"+i);
+
+
+                //send data to kafka topic
+                producer.send(producerRecord, new Callback() {
+                    @Override
+                    public void onCompletion(RecordMetadata recordMetadata, Exception e) {
+                        if(e==null) {
+                            // if exception is null then the record was sent successfully to kafka topic
+                            log.info("Received new Metadata: \n" +
+                                    "Topic: " + recordMetadata.topic() + "\n" +
+                                    "Partition: " + recordMetadata.partition() + "\n" +
+                                    "Offset: " + recordMetadata.offset() + "\n" +
+                                    "Timestamp: " + recordMetadata.timestamp() + "\n"
+                            );
+                        } else {
+                            log.error("Error while producing message", e);
+                        }
+                    }
+                });
+            }
+            try {
+                Thread.sleep(500);
+            } catch (InterruptedException e) {
+                throw new RuntimeException(e);
+            }
+        }
+
+
 
         //flush - tell the producer to send all the data and blocks untill done -- synchronous;
         producer.flush();
