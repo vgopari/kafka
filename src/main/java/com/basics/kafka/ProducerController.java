@@ -71,12 +71,12 @@ public class ProducerController {
                     public void onCompletion(RecordMetadata recordMetadata, Exception e) {
                         if(e==null) {
                             // if exception is null then the record was sent successfully to kafka topic
-                            log.info("Received new Metadata: \n" +
-                                    "Topic: " + recordMetadata.topic() + "\n" +
-                                    "Partition: " + recordMetadata.partition() + "\n" +
-                                    "Offset: " + recordMetadata.offset() + "\n" +
-                                    "Timestamp: " + recordMetadata.timestamp() + "\n"
-                            );
+//                            log.info("Received new Metadata: \n" +
+//                                    "Topic: " + recordMetadata.topic() + "\n" +
+//                                    "Partition: " + recordMetadata.partition() + "\n" +
+//                                    "Offset: " + recordMetadata.offset() + "\n" +
+//                                    "Timestamp: " + recordMetadata.timestamp() + "\n"
+//                            );
                         } else {
                             log.error("Error while producing message", e);
                         }
